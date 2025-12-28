@@ -2,19 +2,63 @@ services:
   formcore-db:
     image: postgres:16
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-formcore}
     ports:
-      - ${DATABASE_PORT}:5432
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - formcore-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+
+  formcore-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: formcore-backend
+    environment:
+      # Database
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      DATABASE_NAME: ${DATABASE_NAME:-formcore}
+      DATABASE_HOST: formcore-db
+      DATABASE_PORT: 5432
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@formcore-db:5432/${DATABASE_NAME:-formcore}
+      DATABASE_ECHO: ${DATABASE_ECHO:-false}
+      # JWT
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-postgres}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      # CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-["*"]}
+      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-true}
+      CORS_ALLOW_METHODS: ${CORS_ALLOW_METHODS:-["*"]}
+      CORS_ALLOW_HEADERS: ${CORS_ALLOW_HEADERS:-["*"]}
+      # Environment
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-false}
+      # Service role database URL (optional)
+      DATABASE_SERVICE_URL: ${DATABASE_SERVICE_URL:-}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      formcore-db:
+        condition: service_healthy
+    networks:
+      - formcore-network
+    restart: unless-stopped
+    command: ["/bin/bash", "scripts/start.sh"]
+
+volumes:
+  postgres_data:
 
 networks:
   formcore-network:
