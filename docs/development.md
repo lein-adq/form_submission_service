@@ -174,7 +174,7 @@ The pgAdmin service is automatically started when you run `docker compose up` in
 
 **Access pgAdmin:**
 - URL: http://localhost:5050 (or your configured `PGADMIN_PORT`)
-- Email: `admin@formcore.local` (or your configured `PGADMIN_EMAIL`)
+- Email: `admin@formcore.com` (or your configured `PGADMIN_EMAIL`)
 - Password: `admin` (or your configured `PGADMIN_PASSWORD`)
 
 **Connecting to the Database in pgAdmin:**
