@@ -164,6 +164,35 @@ All requests are logged with user context via `auth_logging_middleware`. Check l
 - Request path and method
 - Response status
 
+## Development with Docker
+
+When using Docker Compose for development, a `compose.override.yml` file is included that adds pgAdmin for database management.
+
+### pgAdmin Setup
+
+The pgAdmin service is automatically started when you run `docker compose up` in development. It provides a web-based interface for managing your PostgreSQL database.
+
+**Access pgAdmin:**
+- URL: http://localhost:5050 (or your configured `PGADMIN_PORT`)
+- Email: `admin@formcore.local` (or your configured `PGADMIN_EMAIL`)
+- Password: `admin` (or your configured `PGADMIN_PASSWORD`)
+
+**Connecting to the Database in pgAdmin:**
+
+1. Log in to pgAdmin
+2. Right-click "Servers" → "Register" → "Server"
+3. In the "General" tab:
+   - Name: `FormCore Development`
+4. In the "Connection" tab:
+   - Host name/address: `formcore-db` (the Docker service name)
+   - Port: `5432`
+   - Maintenance database: `formcore` (or your `DATABASE_NAME`)
+   - Username: `postgres` (or your `DATABASE_USER`)
+   - Password: `postgres` (or your `DATABASE_PASSWORD`)
+5. Click "Save"
+
+**Note:** The `compose.override.yml` file is committed to the repository for team sharing, but it only affects local development. It will not be used in production deployments. If you need to customize pgAdmin settings, you can override them in your local `.env` file.
+
 ## IDE Setup
 
 ### VS Code
