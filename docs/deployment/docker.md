@@ -43,6 +43,9 @@
 
 - **formcore-db**: PostgreSQL 16 database
 - **formcore-backend**: FastAPI application
+- **pgadmin** (development only): pgAdmin web interface for database management
+
+   The pgAdmin service is automatically included via `compose.override.yml` when running in development. See [Development Guide](../development.md#development-with-docker) for setup instructions.
 
 ## Database Migrations
 
