@@ -16,7 +16,9 @@ from app.core.exceptions import (
 from app.core.logging import logger
 from app.core.middleware.auth_logging import auth_logging_middleware
 from app.core.middleware.rate_limit import limiter
-from app.core.middleware.rls_middleware import rls_middleware
+
+# RLS middleware removed - RLS context is now applied at dependency level
+# from app.core.middleware.rls_middleware import rls_middleware
 from app.modules.auth.api.router import router as auth_router
 from app.modules.forms.api.router import router as forms_router
 from app.modules.submissions.api.router import router as submissions_router
@@ -56,8 +58,8 @@ app.add_middleware(
 # Add custom middleware (order matters - last added runs first)
 # 1. Auth logging (logs all requests with user context)
 app.middleware("http")(auth_logging_middleware)
-# 2. RLS context (sets RLS variables for database operations)
-app.middleware("http")(rls_middleware)
+# 2. RLS context is now handled at the dependency level (get_db_with_rls_context)
+#    Middleware-based RLS has been removed to avoid session mismatch issues
 
 # Register exception handlers
 app.add_exception_handler(DomainException, domain_exception_handler)

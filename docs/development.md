@@ -55,16 +55,44 @@ See [Architecture](architecture.md) for detailed structure explanation.
 
 ## Running Tests
 
+### Quick Start
+
 ```bash
+# Start test database
+docker compose -f compose.test.yml up -d formcore-test-db
+
 # Run all tests
-pytest
+docker compose -f compose.test.yml run --rm formcore-test pytest
 
 # Run with coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test file
-pytest tests/test_auth.py
+docker compose -f compose.test.yml run --rm formcore-test pytest --cov=app --cov-report=html --cov-report=term
 ```
+
+### Test Database Setup
+
+The test suite uses a separate PostgreSQL database running in Docker:
+
+- **Database**: `formcore_test`
+- **Container**: `formcore-test-db`
+- **Configuration**: `compose.test.yml`
+
+**Start test database:**
+```bash
+docker compose -f compose.test.yml up -d formcore-test-db
+```
+
+**Stop test database:**
+```bash
+docker compose -f compose.test.yml down
+```
+
+**Reset test database (clean slate):**
+```bash
+docker compose -f compose.test.yml down -v
+docker compose -f compose.test.yml up -d formcore-test-db
+```
+
+For comprehensive testing documentation, see [Testing Guide](testing.md).
 
 ## Linting and Formatting
 

@@ -1,5 +1,6 @@
 """FastAPI dependencies for authentication and database access."""
 
+from collections.abc import Generator
 from typing import Annotated
 from uuid import UUID
 
@@ -8,7 +9,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.db.rls import apply_rls_context
-from app.core.db.session import get_db
 from app.core.exceptions import AuthenticationError
 from app.core.security.indentity import Identity
 from app.core.security.jwt import decode_access_token
@@ -57,17 +57,28 @@ def get_workspace_id(
 
 
 def get_db_with_rls_context(
-    db: Annotated[Session, Depends(get_db)],
     identity: Annotated[Identity, Depends(get_current_user)],
     workspace_id: Annotated[UUID | None, Depends(get_workspace_id)] = None,
-) -> Session:
-    """Get database session with RLS context applied."""
-    apply_rls_context(
-        db,
-        user_id=str(identity.user_id),
-        workspace_id=str(workspace_id) if workspace_id else None,
-    )
-    return db
+) -> Generator[Session, None, None]:
+    """
+    Get database session with RLS context applied.
+
+    Creates a new session and sets RLS variables on the same connection
+    that will be used for all queries, ensuring RLS policies work correctly.
+    """
+    from app.core.db.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        # Set RLS context on the same session/connection that will execute queries
+        apply_rls_context(
+            db,
+            user_id=str(identity.user_id),
+            workspace_id=str(workspace_id) if workspace_id else None,
+        )
+        yield db
+    finally:
+        db.close()
 
 
 # Dependency for optional authentication (for public endpoints)

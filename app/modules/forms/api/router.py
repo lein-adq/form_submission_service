@@ -6,7 +6,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.db.session import get_db
 from app.core.dependencies import get_db_with_rls_context, get_current_user
 from app.core.exceptions import NotFoundError, ValidationError
 from app.core.security.indentity import Identity
@@ -41,7 +40,9 @@ from app.modules.forms.infrastructure.repository_pg import (
 router = APIRouter(prefix="/workspaces/{workspace_id}/forms", tags=["forms"])
 
 
-def get_form_service(db: Annotated[Session, Depends(get_db)]) -> FormService:
+def get_form_service(
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
+) -> FormService:
     """Dependency for form service."""
     form_repo = PostgreSQLFormRepository(db)
     version_repo = PostgreSQLFormVersionRepository(db)

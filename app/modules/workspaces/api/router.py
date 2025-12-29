@@ -6,7 +6,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.db.session import get_db
 from app.core.dependencies import get_db_with_rls_context, get_current_user
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security.indentity import Identity
@@ -48,15 +47,17 @@ from app.modules.workspaces.infrastructure.repository_pg import (
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
 
-def get_workspace_service(db: Annotated[Session, Depends(get_db)]) -> WorkspaceService:
-    """Dependency for workspace service."""
+def get_workspace_service(
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
+) -> WorkspaceService:
+    """Dependency for workspace service - uses the same RLS-aware session as endpoints."""
     workspace_repo = PostgreSQLWorkspaceRepository(db)
     membership_repo = PostgreSQLMembershipRepository(db)
     return WorkspaceService(workspace_repo, membership_repo)
 
 
 def get_membership_service(
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> MembershipService:
     """Dependency for membership service."""
     workspace_repo = PostgreSQLWorkspaceRepository(db)
@@ -65,7 +66,7 @@ def get_membership_service(
 
 
 def get_folder_service(
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> FolderService:
     """Dependency for folder service."""
     folder_repo = PostgreSQLFolderRepository(db)
@@ -78,7 +79,7 @@ def create_workspace(
     request: WorkspaceCreate,
     identity: Annotated[Identity, Depends(get_current_user)],
     service: Annotated[WorkspaceService, Depends(get_workspace_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> WorkspaceResponse:
     """Create a new workspace."""
     command = CreateWorkspaceCommand(
@@ -142,7 +143,7 @@ def update_workspace(
     workspace_id: UUID,
     request: WorkspaceUpdate,
     service: Annotated[WorkspaceService, Depends(get_workspace_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> WorkspaceResponse:
     """Update a workspace."""
     command = UpdateWorkspaceCommand(workspace_id=workspace_id, name=request.name)
@@ -180,7 +181,7 @@ def delete_workspace(
 @router.get("/{workspace_id}/members", response_model=list[MembershipResponse])
 def list_members(
     workspace_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> list[MembershipResponse]:
     """List all members of a workspace."""
     from app.core.db.models import WorkspaceMember as WorkspaceMemberModel
@@ -210,7 +211,7 @@ def add_member(
     workspace_id: UUID,
     request: AddMemberRequest,
     service: Annotated[MembershipService, Depends(get_membership_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> MembershipResponse:
     """Add a member to a workspace."""
     command = AddMemberCommand(
@@ -247,7 +248,7 @@ def update_member_role(
     user_id: UUID,
     request: UpdateMemberRoleRequest,
     service: Annotated[MembershipService, Depends(get_membership_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> MembershipResponse:
     """Update a member's role."""
     command = UpdateMemberRoleCommand(
@@ -306,7 +307,7 @@ def create_folder(
     workspace_id: UUID,
     request: FolderCreate,
     service: Annotated[FolderService, Depends(get_folder_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> FolderResponse:
     """Create a new folder."""
     command = CreateFolderCommand(
@@ -335,7 +336,7 @@ def create_folder(
 def list_folders(
     workspace_id: UUID,
     service: Annotated[FolderService, Depends(get_folder_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> list[FolderResponse]:
     """List root folders for a workspace."""
     folders = service.list_by_workspace(workspace_id)
@@ -360,7 +361,7 @@ def list_folders(
 def get_folder(
     folder_id: UUID,
     service: Annotated[FolderService, Depends(get_folder_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> FolderResponse:
     """Get folder details."""
     try:
@@ -383,7 +384,7 @@ def get_folder(
 def list_folder_children(
     folder_id: UUID,
     service: Annotated[FolderService, Depends(get_folder_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> list[FolderResponse]:
     """List child folders."""
     try:
@@ -413,7 +414,7 @@ def list_folder_children(
 def list_forms_in_folder(
     workspace_id: UUID,
     folder_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> list[dict]:
     """List forms in a folder."""
     from app.core.db.models import Form as FormModel
@@ -446,7 +447,7 @@ def update_folder(
     folder_id: UUID,
     request: FolderUpdate,
     service: Annotated[FolderService, Depends(get_folder_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> FolderResponse:
     """Update a folder."""
     command = UpdateFolderCommand(folder_id=folder_id, name=request.name)
@@ -471,7 +472,7 @@ def move_folder(
     folder_id: UUID,
     request: FolderMove,
     service: Annotated[FolderService, Depends(get_folder_service)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> FolderResponse:
     """Move folder to a new parent."""
     command = MoveFolderCommand(

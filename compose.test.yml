@@ -1,0 +1,44 @@
+services:
+  formcore-test-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${TEST_DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${TEST_DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${TEST_DATABASE_NAME:-formcore_test}
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    networks:
+      - formcore-test-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${TEST_DATABASE_USER:-postgres}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  formcore-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: [ "/bin/bash", "/app/scripts/test-entrypoint.sh" ]
+    environment:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@formcore-test-db:5432/formcore_test
+      DATABASE_URL: postgresql://postgres:postgres@formcore-test-db:5432/formcore_test
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-test-secret-key}
+      ENVIRONMENT: test
+      DEBUG: false
+    volumes:
+      - .:/app
+      - /app/.venv # Don't override venv in container
+    networks:
+      - formcore-test-network
+    depends_on:
+      formcore-test-db:
+        condition: service_healthy
+    command: [ "pytest", "--help" ]
+
+networks:
+  formcore-test-network:
+    driver: bridge
+
+volumes:
+  test_postgres_data:

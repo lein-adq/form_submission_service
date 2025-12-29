@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.db.session import get_db, get_service_db
+from app.core.db.session import get_service_db
 from app.core.dependencies import get_db_with_rls_context
 from app.core.exceptions import NotFoundError, ValidationError
 from app.modules.forms.infrastructure.repository_pg import (
@@ -29,7 +29,7 @@ router = APIRouter(tags=["submissions"])
 
 
 def get_submission_service(
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[Session, Depends(get_db_with_rls_context)],
 ) -> SubmissionService:
     """Dependency for submission service."""
     submission_repo = PostgreSQLSubmissionRepository(db)

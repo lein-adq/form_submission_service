@@ -33,9 +33,18 @@ class Workspace(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
     # Relationships
-    members: list["WorkspaceMember"] = Relationship(back_populates="workspace")
-    folders: list["Folder"] = Relationship(back_populates="workspace")
-    forms: list["Form"] = Relationship(back_populates="workspace")
+    members: list["WorkspaceMember"] = Relationship(
+        back_populates="workspace",
+        sa_relationship_kwargs={"passive_deletes": True},
+    )
+    folders: list["Folder"] = Relationship(
+        back_populates="workspace",
+        sa_relationship_kwargs={"passive_deletes": True},
+    )
+    forms: list["Form"] = Relationship(
+        back_populates="workspace",
+        sa_relationship_kwargs={"passive_deletes": True},
+    )
 
 
 class WorkspaceMember(SQLModel, table=True):

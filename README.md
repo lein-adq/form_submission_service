@@ -54,6 +54,21 @@ See [Security: RLS](docs/security/rls.md) for details.
 - **[Configuration](docs/configuration.md)** - Environment variables reference
 - **[API](docs/api.md)** - API concepts and endpoint groups (see `/docs` for interactive API documentation)
 
+## Testing
+
+```bash
+# Start test database
+docker compose -f compose.test.yml up -d formcore-test-db
+
+# Run tests
+docker compose -f compose.test.yml run --rm formcore-test pytest
+
+# With coverage
+docker compose -f compose.test.yml run --rm formcore-test pytest --cov=app --cov-report=html
+```
+
+See [TESTING.md](TESTING.md) for quick reference or [docs/testing.md](docs/testing.md) for comprehensive guide.
+
 ## License
 
 MIT
